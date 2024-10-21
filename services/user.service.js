@@ -5,6 +5,7 @@ import {
   registerUserValidationSchema,
 } from "../config/user.validation.js";
 import { User } from "../models/user.model.js";
+import mongoose from "mongoose";
 
 export const registerUser = async (req, res) => {
   const newUser = req.body;
@@ -70,4 +71,39 @@ export const loginUser = async (req, res) => {
   );
   user.password = undefined;
   return res.status(200).send({ user, token });
+};
+export const getSingleUser = async (req, res) => {
+  const userId = req.params.id;
+
+  const isValidMongoId = mongoose.Types.ObjectId.isValid(userId);
+  if (!isValidMongoId) {
+    return res.status(400).send({ message: "Invalid mongo id." });
+  }
+
+  const user = await User.findOne({ _id: userId });
+  if (!user) {
+    return res.status(404).send({ message: "User does not exist." });
+  }
+  return res.status(200).send(user);
+};
+export const getAllUser = async (req, res) => {
+  const user = await User.find();
+  if (!user) {
+    return res.status(404).send({ message: "User Database is Empty" });
+  }
+  return res.status(200).send(user);
+};
+export const deleteUser = async (req, res) => {
+  const userId = req.params.id;
+  const isValidMongoId = mongoose.Types.ObjectId.isValid(userId);
+  if (!isValidMongoId) {
+    return res.status(400).send({ message: "Invalid mongo id." });
+  }
+  const user = await User.findOne({ _id: userId });
+  if (!user) {
+    return res.status(404).send({ message: "User does not exist." });
+  }
+  console.log(user);
+  await User.deleteOne({ _id: userId });
+  return res.status(200).send({ message: "User deleted successfully." });
 };
