@@ -7,7 +7,7 @@ import {
 import { User } from "../models/user.model.js";
 import mongoose from "mongoose";
 
-export const registerUser = async (req, res) => {
+const registerUser = async (req, res) => {
   const newUser = req.body;
 
   //validate new user with joi
@@ -43,7 +43,7 @@ export const registerUser = async (req, res) => {
     }
   }
 };
-export const loginUser = async (req, res) => {
+const loginUser = async (req, res) => {
   const loginCredentials = req.body;
 
   try {
@@ -72,7 +72,7 @@ export const loginUser = async (req, res) => {
   user.password = undefined;
   return res.status(200).send({ user, token });
 };
-export const getSingleUser = async (req, res) => {
+const getSingleUser = async (req, res) => {
   const userId = req.params.id;
 
   const isValidMongoId = mongoose.Types.ObjectId.isValid(userId);
@@ -86,14 +86,14 @@ export const getSingleUser = async (req, res) => {
   }
   return res.status(200).send(user);
 };
-export const getAllUser = async (req, res) => {
+const getAllUser = async (req, res) => {
   const user = await User.find();
   if (!user) {
     return res.status(404).send({ message: "User Database is Empty" });
   }
   return res.status(200).send(user);
 };
-export const deleteUser = async (req, res) => {
+const deleteUser = async (req, res) => {
   const userId = req.params.id;
   const isValidMongoId = mongoose.Types.ObjectId.isValid(userId);
   if (!isValidMongoId) {
@@ -107,3 +107,4 @@ export const deleteUser = async (req, res) => {
   await User.deleteOne({ _id: userId });
   return res.status(200).send({ message: "User deleted successfully." });
 };
+export { deleteUser, getAllUser, getSingleUser, loginUser, registerUser };
