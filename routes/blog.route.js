@@ -2,6 +2,7 @@ import express from "express";
 import { isAuthor } from "../middleware/auth.middleware.js";
 import {
   createBlog,
+  deleteBlog,
   getBlogs,
   getSingleBlog,
   updateBlog,
@@ -11,5 +12,5 @@ router.post("/blog/create", isAuthor, createBlog);
 router.get("/blog/details/:id", getSingleBlog);
 router.get("/blogs", getBlogs);
 router.put("/blog/update/:id", isAuthor, updateBlog);
-router.delete("/blog/delete/:id");
+router.delete("/blog/delete/:id", isAuthor, deleteBlog);
 export { router };

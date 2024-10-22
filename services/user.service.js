@@ -1,11 +1,12 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import {
   loginUserValidationSchema,
   registerUserValidationSchema,
 } from "../config/user.validation.js";
+import { Blog } from "../models/blog.model.js";
 import { User } from "../models/user.model.js";
-import mongoose from "mongoose";
 
 const registerUser = async (req, res) => {
   const newUser = req.body;
@@ -93,18 +94,35 @@ const getAllUser = async (req, res) => {
   }
   return res.status(200).send(user);
 };
-const deleteUser = async (req, res) => {
+const deleteUserAndData = async (req, res) => {
   const userId = req.params.id;
   const isValidMongoId = mongoose.Types.ObjectId.isValid(userId);
   if (!isValidMongoId) {
     return res.status(400).send({ message: "Invalid mongo id." });
   }
-  const user = await User.findOne({ _id: userId });
+  const user = await User.findById(userId);
   if (!user) {
     return res.status(404).send({ message: "User does not exist." });
   }
-  console.log(user);
-  await User.deleteOne({ _id: userId });
-  return res.status(200).send({ message: "User deleted successfully." });
+
+  try {
+    await Blog.deleteMany({ author: userId }); // Deleting blogs associated with the user
+
+    await User.deleteOne({ _id: userId });
+    return res
+      .status(200)
+      .send({ message: "User and associated data deleted successfully." });
+  } catch (error) {
+    return res.status(500).send({
+      message: "An error occurred while deleting the user.",
+      error: error.message,
+    });
+  }
 };
-export { deleteUser, getAllUser, getSingleUser, loginUser, registerUser };
+export {
+  deleteUserAndData,
+  getAllUser,
+  getSingleUser,
+  loginUser,
+  registerUser,
+};

@@ -28,7 +28,6 @@ const createBlog = async (req, res) => {
     res.status(400).send({ message: "Bad Request" });
   }
 };
-
 const getSingleBlog = async (req, res) => {
   const blogId = req.params.id;
 
@@ -67,8 +66,6 @@ const updateBlog = async (req, res) => {
     return res.status(404).send({ message: "Blog does not exist." });
   }
 
-  console.log(blog.author);
-  console.log(req.userInfo._id);
   // check if logged in user is owner of product
   const isAuthorOfBlog = blog.author.equals(req.userInfo._id);
   if (!isAuthorOfBlog) {
@@ -80,5 +77,24 @@ const updateBlog = async (req, res) => {
 
   return res.status(200).send({ message: "Blog updated successfully." });
 };
+const deleteBlog = async (req, res) => {
+  const blogId = req.params.id;
+  const isValidMongoId = mongoose.Types.ObjectId.isValid(blogId);
+  if (!isValidMongoId) {
+    return res.status(400).send({ message: "Invalid mongo id." });
+  }
+  const blog = await Blog.findOne({ _id: blogId });
+  if (!blog) {
+    return res.status(404).send({ message: "Blog does not exist." });
+  }
+  const isAuthorOfBlog = blog.author.equals(req.userInfo._id);
+  if (!isAuthorOfBlog) {
+    return res
+      .status(403)
+      .send({ message: "You are not author of this Blog." });
+  }
+  await Blog.deleteOne({ _id: req.params.id });
+  return res.status(200).send({ message: "Blogs deleted successfully." });
+};
 
-export { createBlog, getSingleBlog, getBlogs, updateBlog };
+export { createBlog, getSingleBlog, getBlogs, updateBlog, deleteBlog };
