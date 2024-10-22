@@ -60,7 +60,6 @@ export const isAuthor = async (req, res, next) => {
     }
     //?phase2
     req.userInfo = user;
-    console.log(user);
     next();
   } catch (error) {
     res.status(401).send({ message: "Unauthorized." });

@@ -1,12 +1,14 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import {
   loginUserValidationSchema,
   registerUserValidationSchema,
 } from "../config/user.validation.js";
+import { Blog } from "../models/blog.model.js";
 import { User } from "../models/user.model.js";
 
-export const registerUser = async (req, res) => {
+const registerUser = async (req, res) => {
   const newUser = req.body;
 
   //validate new user with joi
@@ -42,7 +44,7 @@ export const registerUser = async (req, res) => {
     }
   }
 };
-export const loginUser = async (req, res) => {
+const loginUser = async (req, res) => {
   const loginCredentials = req.body;
 
   try {
@@ -70,4 +72,57 @@ export const loginUser = async (req, res) => {
   );
   user.password = undefined;
   return res.status(200).send({ user, token });
+};
+const getSingleUser = async (req, res) => {
+  const userId = req.params.id;
+
+  const isValidMongoId = mongoose.Types.ObjectId.isValid(userId);
+  if (!isValidMongoId) {
+    return res.status(400).send({ message: "Invalid mongo id." });
+  }
+
+  const user = await User.findOne({ _id: userId });
+  if (!user) {
+    return res.status(404).send({ message: "User does not exist." });
+  }
+  return res.status(200).send(user);
+};
+const getAllUser = async (req, res) => {
+  const user = await User.find();
+  if (!user) {
+    return res.status(404).send({ message: "User Database is Empty" });
+  }
+  return res.status(200).send(user);
+};
+const deleteUserAndData = async (req, res) => {
+  const userId = req.params.id;
+  const isValidMongoId = mongoose.Types.ObjectId.isValid(userId);
+  if (!isValidMongoId) {
+    return res.status(400).send({ message: "Invalid mongo id." });
+  }
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).send({ message: "User does not exist." });
+  }
+
+  try {
+    await Blog.deleteMany({ author: userId }); // Deleting blogs associated with the user
+
+    await User.deleteOne({ _id: userId });
+    return res
+      .status(200)
+      .send({ message: "User and associated data deleted successfully." });
+  } catch (error) {
+    return res.status(500).send({
+      message: "An error occurred while deleting the user.",
+      error: error.message,
+    });
+  }
+};
+export {
+  deleteUserAndData,
+  getAllUser,
+  getSingleUser,
+  loginUser,
+  registerUser,
 };
