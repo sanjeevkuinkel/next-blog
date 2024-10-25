@@ -38,6 +38,7 @@ const userSchema = new mongoose.Schema(
       enum: ["author", "user"],
       default: "user",
     },
+
     posts: [
       {
         type: mongoose.Schema.Types.ObjectId,

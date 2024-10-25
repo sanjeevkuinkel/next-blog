@@ -7,6 +7,7 @@ import {
   loginUser,
   registerUser,
 } from "../services/user.service.js";
+import { refreshAccessToken } from "./refresh.token.js";
 
 const router = express.Router();
 router.post("/user/register", registerUser);
@@ -14,4 +15,5 @@ router.get("/user/login", loginUser);
 router.get("/user/details/:id", getSingleUser);
 router.get("/users", getAllUser);
 router.delete("/user/delete/:id", isAuthor, deleteUserAndData);
+router.post("/token", refreshAccessToken);
 export { router };

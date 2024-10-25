@@ -25,3 +25,7 @@ export const blogPostValidationSchema = Joi.object({
 
   categories: Joi.array().items(Joi.string().pattern(/^[0-9a-fA-F]{24}$/)), // Validate ObjectId format
 });
+export const paginationDetailsValidationSchema = Joi.object({
+  page: Joi.number().integer().required().min(1),
+  limit: Joi.number().integer().required().min(1),
+});

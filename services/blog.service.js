@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
-import { blogPostValidationSchema } from "../config/blog.validation.js";
+import {
+  blogPostValidationSchema,
+  paginationDetailsValidationSchema,
+} from "../config/blog.validation.js";
 import { Blog } from "../models/blog.model.js";
 
 const createBlog = async (req, res) => {
@@ -42,13 +45,45 @@ const getSingleBlog = async (req, res) => {
   }
   return res.status(200).send(blog);
 };
+//get blogs author pov
 const getBlogs = async (req, res) => {
-  const blog = await Blog.find();
-  if (!blog) {
+  const paginationDetails = req.body;
+  const { page, limit } = paginationDetails;
+  try {
+    await paginationDetailsValidationSchema.validateAsync(paginationDetails);
+  } catch (error) {
+    return res.status(400).send({ message: error.message });
+  }
+  //calculate skip
+  const skip = (page - 1) * limit;
+  const blogs = await Blog.aggregate([
+    {
+      $match: {
+        author: req.userInfo._id,
+      },
+    },
+    {
+      $skip: skip,
+    },
+    {
+      $limit: limit,
+    },
+    {
+      $project: {
+        title: 1,
+        content: 1,
+        author: 1,
+        categories: 1,
+      },
+    },
+  ]);
+
+  if (!blogs) {
     return res.status(404).send({ message: "Blog database is Empty" });
   }
-  return res.status(200).send(blog);
+  return res.status(200).send(blogs);
 };
+
 const updateBlog = async (req, res) => {
   const blogId = req.params.id;
   const updatedBlog = req.body;
