@@ -13,7 +13,7 @@ export const registerUserValidationSchema = Joi.object({
     .max(20)
     .required()
     .pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/),
-  profilepicture: Joi.required(),
+  profilePicture: Joi.required(),
   bio: Joi.string().min(8).max(160).required(),
   role: Joi.string()
     .valid("user", "author") // Restricts role to either 'user' or 'admin'

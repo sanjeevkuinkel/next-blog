@@ -6,6 +6,8 @@ import {
 } from "../config/user.validation.js";
 import { User } from "../models/user.model.js";
 
+import { checkMongoIdValidation } from "../config/mongoIdValidator.js";
+
 export const registerUser = async (req, res) => {
   const newUser = req.body;
 
@@ -29,7 +31,7 @@ export const registerUser = async (req, res) => {
         username: newUser.username,
         email: newUser.email,
         password: hashedPassword,
-        profilepicture: newUser.profilepicture,
+        profilePicture: newUser.profilePicture,
         bio: newUser.bio,
         role: newUser.role,
       });
@@ -70,4 +72,51 @@ export const loginUser = async (req, res) => {
   );
   user.password = undefined;
   return res.status(200).send({ user, token });
+};
+export const getSingleUser = async (req, res) => {
+  const userId = req.params.id;
+
+  //validate mongodb id
+  const isValidMongoId = checkMongoIdValidation(userId);
+  if (!isValidMongoId) {
+    res.status(400).send({ message: "Invalid Mongodb Id." });
+  }
+  try {
+    // const user = await User.find({ _id: userId });
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).send({ message: "User Does not Exist." });
+    }
+
+    res.status(200).send({ user });
+  } catch (error) {
+    console.error("Failed to fetch data:", error.message);
+  }
+};
+export const getUser = async (req, res) => {
+  try {
+    const user = await User.find();
+    if (!user) {
+      return res.status(404).send({ message: "User Does not exist." });
+    }
+    res.status(200).send({ user });
+  } catch (error) {
+    console.error("Failed to fetch data:", error.message);
+  }
+};
+export const deleteUserAndData = async (req, res) => {
+  const userId = req.params.id;
+  const isValidMongoId = checkMongoIdValidation(userId);
+  if (!isValidMongoId) {
+    res.status(400).send({ message: "Invalid Mongodb Id." });
+  }
+  const user = await User.findById(userId);
+
+  if (!user) {
+    return res.status(404).send({ message: "User Does not exist." });
+  } else {
+    // await Blog.find({_id:})
+    await User.deleteOne({ _id: userId });
+    return res.status(200).send({ message: "User Deleted Successfully." });
+  }
 };
