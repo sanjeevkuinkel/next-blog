@@ -38,7 +38,7 @@ export const getSingleBlog=async (req, res) => {
       }
       const blog=await Blog.findById(blogId);
       if(!blog)
-        return res.status(404).send({message:"Blog Doesnot Exist."})
+        return res.status(404).send({message:"Blog Does not Exist."})
       return res.status(200).send({blog})
       } catch (error) {
         console.log("Error occured",error.message)
@@ -64,7 +64,11 @@ export const getAuthorBlogs=async(req,res)=>{
       }
     const blogs=await Blog.find({author:authorId})
     console.log(blogs)
-    
+    if(!blogs){
+        return res.status(404).send({message:"Blog Does not Exist."});
+
+    }
+    return res.status(200).send({blogs})
 
 }
 export const updateBlog= (req, res) => {
