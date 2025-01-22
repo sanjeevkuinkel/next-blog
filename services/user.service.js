@@ -7,6 +7,7 @@ import {
 import { User } from "../models/user.model.js";
 
 import { checkMongoIdValidation } from "../config/mongoIdValidator.js";
+import { Blog } from "../models/blog.model.js";
 
 export const registerUser = async (req, res) => {
   const newUser = req.body;
@@ -110,13 +111,30 @@ export const deleteUserAndData = async (req, res) => {
   if (!isValidMongoId) {
     res.status(400).send({ message: "Invalid Mongodb Id." });
   }
-  const user = await User.findById(userId);
-
-  if (!user) {
-    return res.status(404).send({ message: "User Does not exist." });
-  } else {
-    // await Blog.find({_id:})
-    await User.deleteOne({ _id: userId });
-    return res.status(200).send({ message: "User Deleted Successfully." });
+  // await Blog.find({_id:userId})
+  try {
+    if(req.userInfo._id===req.params.id){
+      const user = await User.findById(userId);
+      if (!user) {
+     return res.status(404).send({ message: "User Does not exist." });
+    } else {
+      // if(req.userInfo._id==userId)
+      const blog=await Blog.find({author:userId}).deleteMany();
+      if(!blog){
+       return res.status(404).send({message:"Blog does not exist "})
+      }
+      await Blog.deleteMany({ author: userId });
+  
+      await User.deleteOne({ _id: userId });
+       return res.status(200).send({ message: "User Deleted Successfully." });
+    }
+  }else
+  {
+    return res.status(401).send({message:"You are not the author of the blogs.Unauthorized"})
   }
+  } catch (error) {
+    console.error("Failed to fetch data:", error.message);
+  
+  }
+ 
 };

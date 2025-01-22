@@ -13,13 +13,13 @@ export const blogPostValidationSchema = Joi.object({
     "any.required": "Content is required",
   }),
 
-  author: Joi.string()
-    .pattern(/^[0-9a-fA-F]{24}$/) // Validate ObjectId format
-    .required()
-    .messages({
-      "string.base": "Author must be a valid ObjectId",
-      "any.required": "Author is required",
-    }),
+  // author: Joi.string()
+  //   .pattern(/^[0-9a-fA-F]{24}$/) // Validate ObjectId format
+  //   .required()
+  //   .messages({
+  //     "string.base": "Author must be a valid ObjectId",
+  //     "any.required": "Author is required",
+  //   }),
 
   tags: Joi.array().items(Joi.string().trim()).default([]),
 

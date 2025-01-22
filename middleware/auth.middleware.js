@@ -41,7 +41,7 @@ export const isAuthor = async (req, res, next) => {
     const token = splittedArray?.length === 2 && splittedArray[1];
     //if not token,terminate
     if (!token) {
-      res.status(401).send({ message: error.message });
+      return res.status(401).send({ message: error.message });
     }
     //decrpyt token using jwt.verify
     const userData = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET_KEY);
@@ -50,19 +50,18 @@ export const isAuthor = async (req, res, next) => {
     const user = await User.findOne({ email: userData.email });
     //if not user terminate
     if (!user) {
-      res.status(401).send({ message: "Unauthorized" });
+     return res.status(401).send({ message: "User Does not Exist." });
     }
 
     //if user role is not user ,terminate
-
     if (user.role !== "author") {
-      res.status(401).send({ message: "Unauthorized" });
+      return res.status(401).send({ message: "Unauthorized" });
     }
     //?phase2
     req.userInfo = user;
-    console.log(user);
+    // console.log(user);
     next();
   } catch (error) {
-    res.status(401).send({ message: "Unauthorized." });
+   return res.status(401).send({ message: "Unauthorized." });
   }
 };
