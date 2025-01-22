@@ -1,3 +1,5 @@
+
+import { updateBlogValidationSchema } from "../config/blog.validation.js";
 import { checkMongoIdValidation } from "../config/mongoIdValidator.js";
 import {Blog} from "../models/blog.model.js";
 
@@ -47,7 +49,7 @@ export const getSingleBlog=async (req, res) => {
 export const getBlogs=async(req,res)=>{
    try {
     const blogs=await Blog.find()
-    if(!blogs)return res.status(404).send({message:"Blog Doesnot Exist."})
+    if(!blogs)return res.status(404).send({message:"Blog Does not Exist."})
         return res.status(200).send({blogs})
 
    } catch (error) {
@@ -71,6 +73,67 @@ export const getAuthorBlogs=async(req,res)=>{
     return res.status(200).send({blogs})
 
 }
-export const updateBlog= (req, res) => {
-
+export const updateBlog= async(req, res) => {
+    const blogId=req.params.id;
+    const isValidMongoId=checkMongoIdValidation(blogId);
+    if(!isValidMongoId)
+    {
+        return res.status(400).send({ message: "Invalid Mongodb Id." });
+    }
+    const newUpdatedBlog=req.body;
+    try {
+        await updateBlogValidationSchema.validateAsync(newUpdatedBlog)
+    } catch (error) {
+        return res.status(400).send({message:error.message})
+    }
+    try {
+        
+        const blog=await Blog.findById(blogId)
+       
+        if(!blog){
+            return res.status(404).send({message:"Blog does not exist."})
+        }
+        if(req.userInfo._id.equals(blog.author)){
+        await Blog.updateOne({_id:blogId},{
+            $set:{
+                title:newUpdatedBlog.title,
+                content:newUpdatedBlog.content,
+                
+            }
+        })
+        return res.status(200).send("Blog Updated Successfully.")
+    }else{
+        return res.status(401).send({message:"You are not the author of the blogs.Unauthorized"})
+    }
+        
+     
+    } catch (error) {
+        return res.status(400).send({message:error.message})
+    }
 }
+export const deleteBlog=async(req, res) => {
+    const blogId=req.params.id;
+    const isValidMongoId=checkMongoIdValidation(blogId);
+    if(!isValidMongoId)
+    {
+        return res.status(400).send({ message: "Invalid Mongodb Id." });
+    }
+    try {
+        const blog=await Blog.findById(blogId);
+        if(!blog)
+        {
+            return res.status(404).send({message:"Blog does not exist."}) 
+        }
+        if(req.userInfo._id.equals(blog.author)){
+        await Blog.deleteOne({_id:blogId})
+        return res.status(200).send({message:"Blog deleted Successfully."})
+        }
+        else{
+            return res.status(401).send({message:"You are not the author of the blogs.Unauthorized"})
+        }
+    } catch (error) {
+        return res.status(400).send({message:error.message})
+    }
+}   
+
+

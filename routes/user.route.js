@@ -5,6 +5,7 @@ import {
   getSingleUser,
   getUser,
   deleteUserAndData,
+  editUser,
 } from "../services/user.service.js";
 import { isAuthor } from "../middleware/auth.middleware.js";
 const router = express.Router();
@@ -13,6 +14,7 @@ router.get("/user/login", loginUser);
 router.get("/user/:id", getSingleUser);
 router.get("/users", getUser);
 router.delete("/delete/:id",isAuthor, deleteUserAndData);
+router.put("/user/edit",editUser)
 // router.delete("/delete", deleteAllUser);
 // router.post("/refreshToken",getRefreshToken)
 

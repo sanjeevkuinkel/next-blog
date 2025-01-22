@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import {
   loginUserValidationSchema,
   registerUserValidationSchema,
+  updateUserValidationSchema,
 } from "../config/user.validation.js";
 import { User } from "../models/user.model.js";
 
@@ -138,3 +139,14 @@ export const deleteUserAndData = async (req, res) => {
   }
  
 };
+export const editUser=async(req,res)=>{
+  const updatedUserData=req.body;
+
+ try {
+        await updateUserValidationSchema.validateAsync(updatedUserData)
+    } catch (error) {
+        return res.status(400).send({message:error.message})
+    }
+    const userDetails=req.userInfo
+    console.log(userDetails)
+}
