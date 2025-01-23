@@ -12,18 +12,14 @@ export const blogPostValidationSchema = Joi.object({
     "string.empty": "Content cannot be empty",
     "any.required": "Content is required",
   }),
+  tags: Joi.array()
+  .items(Joi.string().trim())
+  .default([]) // Default to an empty array if missing
+  .optional(),
 
-  // author: Joi.string()
-  //   .pattern(/^[0-9a-fA-F]{24}$/) // Validate ObjectId format
-  //   .required()
-  //   .messages({
-  //     "string.base": "Author must be a valid ObjectId",
-  //     "any.required": "Author is required",
-  //   }),
-
-  tags: Joi.array().items(Joi.string().trim()).default([]),
-
-  categories: Joi.array().items(Joi.string().pattern(/^[0-9a-fA-F]{24}$/)), // Validate ObjectId format
+categories: Joi.array()
+  .items(Joi.string().pattern(/^[0-9a-fA-F]{24}$/)) // ObjectId validation
+  .optional(),
 });
 
 export const updateBlogValidationSchema=Joi.object({

@@ -1,14 +1,16 @@
 
-import { updateBlogValidationSchema } from "../config/blog.validation.js";
+import { blogPostValidationSchema, updateBlogValidationSchema } from "../config/blog.validation.js";
 import { checkMongoIdValidation } from "../config/mongoIdValidator.js";
+import { paginationDetailsValidationSchema } from "../config/paginationDetails.validation.js";
 import {Blog} from "../models/blog.model.js";
 
 export const createBlog = async (req, res) => {
     const newBlog = req.body;
     try {
         await blogPostValidationSchema.validateAsync(newBlog);
+        
     } catch (error) {
-        console.error("Validation Error:", error.details); 
+         console.error("Validation Error:", error.details); 
         return res.status(400).send({ message: "Blog Validation Failed.", details: error.details });
     }
     const authorId = req.userInfo?._id; 
@@ -47,30 +49,52 @@ export const getSingleBlog=async (req, res) => {
       }
 };
 export const getBlogs=async(req,res)=>{
-   try {
-    const blogs=await Blog.find()
+    const paginationDetails=req.body;
+    try {
+        await paginationDetailsValidationSchema.validateAsync(paginationDetails)
+    } catch (error) {
+        //if not valid terminate
+        return res.status(400).send({message:error.message})
+    }
+    ///calculate skip
+    const skip=(paginationDetails.page-1)*paginationDetails.limit;
+    try {
+   const blogs= await Blog.aggregate([
+        {$match:{}},
+        { $skip:skip},
+        { $limit:paginationDetails.limit},
+        {$project:{
+            title:1,
+            content:1,
+        }}
+    ])
     if(!blogs)return res.status(404).send({message:"Blog Does not Exist."})
         return res.status(200).send({blogs})
-
    } catch (error) {
     console.error("Error fetching blogs:", error.message);
     return res.status(500).send({ message: "Internal server error."})
    }
 };
 export const getAuthorBlogs=async(req,res)=>{
-    const authorId=req.params.id;
-    console.log(authorId)
-    const isValidMongoId=checkMongoIdValidation(authorId);
-    if (!isValidMongoId) {
-        return res.status(400).send({ message: "Invalid Mongodb Id." });
-      }
-    const blogs=await Blog.find({author:authorId})
-    console.log(blogs)
-    if(!blogs){
+    const authorId=req.userInfo._id;
+    const paginationDetails=req.body
+    try {
+        await paginationDetailsValidationSchema.validateAsync(paginationDetails)
+    } catch (error) {
+        //if not valid terminate
+        return res.status(400).send({message:error.message})
+    }
+    const skip=(paginationDetails.page)*paginationDetails.limit;//this if page start with0
+    const authorBlogs=await Blog.aggregate([
+        {$match:{author :authorId}},
+        {$skip:skip},
+        {$limit:paginationDetails.limit}
+    ])
+    if(!authorBlogs){
         return res.status(404).send({message:"Blog Does not Exist."});
 
     }
-    return res.status(200).send({blogs})
+    return res.status(200).send({authorBlogs})
 
 }
 export const updateBlog= async(req, res) => {

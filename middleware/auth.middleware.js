@@ -35,7 +35,7 @@ export const isUser = async (req, res, next) => {
 export const isAuthor = async (req, res, next) => {
   try {
     //?phase1
-    //extract token from headers
+    //extract token from header
     const authorization = req?.headers?.authorization;
     const splittedArray = authorization?.split(" ");
     const token = splittedArray?.length === 2 && splittedArray[1];
@@ -63,5 +63,24 @@ export const isAuthor = async (req, res, next) => {
     next();
   } catch (error) {
    return res.status(401).send({ message: "Unauthorized." });
+  }
+};
+export const isAuthenticated = async (req, res, next) => {
+  try {
+    const authorization = req?.headers?.authorization;
+    const splittedArray = authorization?.split(" ");
+    const token = splittedArray?.length === 2 && splittedArray[1];
+    if (!token) {
+      return res.status(401).send({ message: "Unauthorized: No token provided." });
+    }
+    const userData = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET_KEY);
+    const user = await User.findOne({ email: userData.email });
+    if (!user) {
+      return res.status(401).send({ message: "Unauthorized: User does not exist." });
+    }
+    req.userInfo = user;
+    next();
+  } catch (error) {
+    return res.status(401).send({ message: "Unauthorized: Invalid token." });
   }
 };

@@ -139,7 +139,7 @@ export const deleteUserAndData = async (req, res) => {
   }
  
 };
-export const editUser=async(req,res)=>{
+export const editUserDetails=async(req,res)=>{
   const updatedUserData=req.body;
 
  try {
@@ -147,6 +147,17 @@ export const editUser=async(req,res)=>{
     } catch (error) {
         return res.status(400).send({message:error.message})
     }
-    const userDetails=req.userInfo
-    console.log(userDetails)
-}
+    const userId=req.userInfo._id;
+    const hashedPassword = await bcrypt.hash(updatedUserData.password, 10);
+    await User.updateOne({_id:userId},{ 
+      $set:{
+        username:updatedUserData.username,
+        email:updatedUserData.email,
+        password:hashedPassword,
+        profilePicture:updatedUserData.profilePicture,
+        bio:updatedUserData.bio,
+        role:updatedUserData.role,
+      }
+    })
+    return res.status(200).send({message:"Profile is updated successfully."})
+  }
