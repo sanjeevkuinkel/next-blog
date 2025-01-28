@@ -9,9 +9,6 @@ app.use(express.json());
 app.use(userRoutes);
 app.use(blogRoutes);
 const port = process.env.PORT;
-app.get("/", (req, res) => {
-  res.send("express app Created");
-});
 app.listen(port, () => {
   console.log(`App is listening on port http://localhost:${port}`);
 });

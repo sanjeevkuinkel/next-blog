@@ -9,7 +9,7 @@ export const isUser = async (req, res, next) => {
     const token = splittedArray?.length === 2 && splittedArray[1];
     //if not token,terminate
     if (!token) {
-      res.status(401).send({ message: error.message });
+      return res.status(401).send({ message: error.message });
     }
     //decrpyt token using jwt.verify
     const userData = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET_KEY);
@@ -18,18 +18,18 @@ export const isUser = async (req, res, next) => {
     const user = await User.findOne({ email: userData.email });
     //if not user terminate
     if (!user) {
-      res.status(401).send({ message: "Unauthorized" });
+      return res.status(401).send({ message: "Unauthorized" });
     }
 
     //if user role is not user ,terminate
     if (user.role !== "user") {
-      res.status(401).send({ message: "Unauthorized" });
+      return res.status(401).send({ message: "Unauthorized" });
     }
     //?phase2
     req.userInfo = user;
     next();
   } catch (error) {
-    res.status(401).send({ message: "Unauthorized." });
+    return res.status(401).send({ message: "Unauthorized." });
   }
 };
 export const isAuthor = async (req, res, next) => {
@@ -50,7 +50,7 @@ export const isAuthor = async (req, res, next) => {
     const user = await User.findOne({ email: userData.email });
     //if not user terminate
     if (!user) {
-     return res.status(401).send({ message: "User Does not Exist." });
+      return res.status(401).send({ message: "User Does not Exist." });
     }
 
     //if user role is not user ,terminate
@@ -62,7 +62,7 @@ export const isAuthor = async (req, res, next) => {
     // console.log(user);
     next();
   } catch (error) {
-   return res.status(401).send({ message: "Unauthorized." });
+    return res.status(401).send({ message: "Unauthorized." });
   }
 };
 export const isAuthenticated = async (req, res, next) => {
@@ -71,12 +71,16 @@ export const isAuthenticated = async (req, res, next) => {
     const splittedArray = authorization?.split(" ");
     const token = splittedArray?.length === 2 && splittedArray[1];
     if (!token) {
-      return res.status(401).send({ message: "Unauthorized: No token provided." });
+      return res
+        .status(401)
+        .send({ message: "Unauthorized: No token provided." });
     }
     const userData = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET_KEY);
     const user = await User.findOne({ email: userData.email });
     if (!user) {
-      return res.status(401).send({ message: "Unauthorized: User does not exist." });
+      return res
+        .status(401)
+        .send({ message: "Unauthorized: User does not exist." });
     }
     req.userInfo = user;
     next();

@@ -1,5 +1,4 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import {
   loginUserValidationSchema,
   registerUserValidationSchema,
@@ -9,7 +8,8 @@ import { User } from "../models/user.model.js";
 
 import { checkMongoIdValidation } from "../config/mongoIdValidator.js";
 import { Blog } from "../models/blog.model.js";
-
+import { generateToken } from "../utility/tokenGenerator.js";
+import { RefreshToken } from "../models/refreshToken.model.js";
 export const registerUser = async (req, res) => {
   const newUser = req.body;
 
@@ -65,15 +65,12 @@ export const loginUser = async (req, res) => {
   if (!passwordMatch) {
     return res.status(404).send({ message: "Invalid Credentials" });
   }
-  const token = jwt.sign(
-    { email: user.email },
-    process.env.JWT_ACCESS_TOKEN_SECRET_KEY,
-    {
-      expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRY_TIME,
-    }
-  );
+  //   const accessToken = generateAccessToken(user);
+  //   const reFreshToken = generateRefreshToken(user);
+  const { accessToken, refreshToken } = generateToken(user);
+  await RefreshToken.create({ token: refreshToken, userId: user._id });
   user.password = undefined;
-  return res.status(200).send({ user, token });
+  return res.status(200).send({ user, refreshToken, accessToken });
 };
 export const getSingleUser = async (req, res) => {
   const userId = req.params.id;
@@ -114,50 +111,52 @@ export const deleteUserAndData = async (req, res) => {
   }
   // await Blog.find({_id:userId})
   try {
-    if(req.userInfo._id===req.params.id){
+    if (req.userInfo._id === req.params.id) {
       const user = await User.findById(userId);
       if (!user) {
-     return res.status(404).send({ message: "User Does not exist." });
-    } else {
-      // if(req.userInfo._id==userId)
-      const blog=await Blog.find({author:userId}).deleteMany();
-      if(!blog){
-       return res.status(404).send({message:"Blog does not exist "})
+        return res.status(404).send({ message: "User Does not exist." });
+      } else {
+        // if(req.userInfo._id==userId)
+        const blog = await Blog.find({ author: userId }).deleteMany();
+        if (!blog) {
+          return res.status(404).send({ message: "Blog does not exist " });
+        }
+        await Blog.deleteMany({ author: userId });
+
+        await User.deleteOne({ _id: userId });
+        return res.status(200).send({ message: "User Deleted Successfully." });
       }
-      await Blog.deleteMany({ author: userId });
-  
-      await User.deleteOne({ _id: userId });
-       return res.status(200).send({ message: "User Deleted Successfully." });
+    } else {
+      return res
+        .status(401)
+        .send({ message: "You are not the author of the blogs.Unauthorized" });
     }
-  }else
-  {
-    return res.status(401).send({message:"You are not the author of the blogs.Unauthorized"})
-  }
   } catch (error) {
     console.error("Failed to fetch data:", error.message);
-  
   }
- 
 };
-export const editUserDetails=async(req,res)=>{
-  const updatedUserData=req.body;
+export const editUserDetails = async (req, res) => {
+  const updatedUserData = req.body;
 
- try {
-        await updateUserValidationSchema.validateAsync(updatedUserData)
-    } catch (error) {
-        return res.status(400).send({message:error.message})
-    }
-    const userId=req.userInfo._id;
-    const hashedPassword = await bcrypt.hash(updatedUserData.password, 10);
-    await User.updateOne({_id:userId},{ 
-      $set:{
-        username:updatedUserData.username,
-        email:updatedUserData.email,
-        password:hashedPassword,
-        profilePicture:updatedUserData.profilePicture,
-        bio:updatedUserData.bio,
-        role:updatedUserData.role,
-      }
-    })
-    return res.status(200).send({message:"Profile is updated successfully."})
+  try {
+    await updateUserValidationSchema.validateAsync(updatedUserData);
+  } catch (error) {
+    return res.status(400).send({ message: error.message });
   }
+  const userId = req.userInfo._id;
+  const hashedPassword = await bcrypt.hash(updatedUserData.password, 10);
+  await User.updateOne(
+    { _id: userId },
+    {
+      $set: {
+        username: updatedUserData.username,
+        email: updatedUserData.email,
+        password: hashedPassword,
+        profilePicture: updatedUserData.profilePicture,
+        bio: updatedUserData.bio,
+        role: updatedUserData.role,
+      },
+    }
+  );
+  return res.status(200).send({ message: "Profile is updated successfully." });
+};
